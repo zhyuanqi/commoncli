@@ -1,0 +1,64 @@
+
+aws opensearch create-domain \
+--region us-east-1 \
+--no-verify-ssl \
+--endpoint-url https://es-staging.us-east-1.amazonaws.com \
+--domain-name ellaosd2 \
+--engine-version OpenSearch_1.0 \
+--cluster-config InstanceType=t3.medium.search,InstanceCount=2,DedicatedMasterEnabled=false,ZoneAwarenessEnabled=false \
+--ebs-options EBSEnabled=true,VolumeType=gp2,VolumeSize=10 \
+--encryption-at-rest-options Enabled=true \
+--node-to-node-encryption-options Enabled=true \
+--access-policies '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["es:*"],"Resource":"*"}]}' \
+--advanced-security-options '{"Enabled":true,"InternalUserDatabaseEnabled":true,"MasterUserOptions":{"MasterUserName":"admin","MasterUserPassword":"Admin_123"}}' \
+--domain-endpoint-options EnforceHTTPS=true,TLSSecurityPolicy="Policy-Min-TLS-1-0-2019-07"
+aws opensearch describe-domain \
+--region us-east-1 \
+--endpoint-url https://es-staging.us-east-1.amazonaws.com \
+--domain-name ellaosd2
+
+// Fully managed container registry
+aws ecr create-repository --repository-name kibana_oci_container --image-scanning-configuration scanOnPush=true --region us-east-1
+{
+    "repository": {
+        "repositoryArn": "arn:aws:ecr:us-east-1:159307887451:repository/kibana_oci_container",
+        "registryId": "159307887451",
+        "repositoryName": "kibana_oci_container",
+        "repositoryUri": "159307887451.dkr.ecr.us-east-1.amazonaws.com/kibana_oci_container",
+        "createdAt": "2022-01-26T23:14:41+00:00",
+        "imageTagMutability": "MUTABLE",
+        "imageScanningConfiguration": {
+            "scanOnPush": true
+        },
+        "encryptionConfiguration": {
+            "encryptionType": "AES256"
+        }
+    }
+}
+
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 159307887451.dkr.ecr.us-east-1.amazonaws.com/kibana_oci_container
+
+docker tag local_registry:SichendDockerImageTest-1.0-1643408767.4700341  159307887451.dkr.ecr.us-east-1.amazonaws.com/kibana_oci_container:1.0.1 # Can be whatever tag
+
+docker push 159307887451.dkr.ecr.us-east-1.amazonaws.com/kibana_oci_container:ellatest
+docker run -t -d -u 1001:1001 -w /home/jenkins/workspace/Kibana_6.7.2-dev -v /home/jenkins/workspace/Kibana_6.7.2-dev:/home/jenkins/workspace/Kibana_6.7.2-dev:rw,z -v /home/jenkins/workspace/Kibana_6.7.2-dev@tmp:/home/jenkins/workspace/Kibana_6.7.2-dev@tmp:rw,z test-image:87 cat
+
+
+python sdpd-ops-mechanic -c sdpds-aws-curl -r iad -s gamma -a "--operation CreateComponent --payload ' { \"stackName\": \"swift-us-east-1-staging\", \"componentName\": \"sdpds_component_zhyuanqi_2\", \"componentType\": \"OCI_CONTAINER\", \"componentProperties\": { \"nodeTypeList\": [\"es.data\", \"es.master\"], \"ociContainerRepositoryDetails\": {\"url\": \"159307887451.dkr.ecr.us-east-1.amazonaws.com/kibana_oci_container\",\"roleArn\": \"arn:aws:iam::159307887451:role/sdpds-ecr-read-only\"}}}'"
+
+python sdpd-ops-mechanic -c sdpds-aws-curl -r iad -s gamma -a "--operation GetUploadLocationForComponentVersion --payload '{\"componentVersion\":{\"componentName\": \"sdpds_component_zhyuanqi_2\",\"componentScopeDefinition\":{\"componentScope\": \"GLOBAL\"},\"majorVersion\": \"4\",\"minorVersion\": \"3\"},\"stackName\":\"swift-us-east-1-staging\"}'"
+
+Curl -T  FILENAME SERVER_ADDRESS
+
+Major 3
+Minor 8
+
+python sdpd-ops-mechanic -c sdpds-aws-curl -r iad -s gamma -a "--operation CreateComponentVersion --payload '{\"stackName\": \"swift-us-east-1-staging\", \"componentVersion\":{\"componentName\": \"sdpds_component_zhyuanqi_2\",\"componentScopeDefinition\":{\"componentScope\": \"GLOBAL\"},\"majorVersion\": \"4\",\"minorVersion\": \"1\"},\"packageKey\":\"czM6Ly9zZHBkc2VydmljZS11cy1lYXN0LTEtZ2FtbWEtcGFja2FnZS1yZXBvLXRtcC9lYzIzMWE5OS02OGRiLTQwMjgtYWU1OC1mOTVkNWQwNzNhMDcvc2RwZHNfY29tcG9uZW50X3poeXVhbnFpXzItMy44\",\"componentVersionProperties\":{\"eligibleForNewDomains\": \"READY\",\"ociContainerImageDetails\":{\"imageDigest\":\"sha256:a11aa7fda48320c09ff108af8e46d9682da11669a4be503684c1992139c8a37d\"}}}'"
+
+
+python sdpd-ops-mechanic -c sdpds-aws-curl -r iad -s gamma -a "--operation ApplyComponentVersions --payload '{\"componentVersionList\":[{\"componentVersion\":{\"componentName\":\"sdpds_component_zhyuanqi_2\",\"componentScopeDefinition\":{\"componentScope\": \"GLOBAL\"},\"majorVersion\": \"4\",\"minorVersion\": \"1\"}}],\"cluster\":{\"stackName\": \"swift-us-east-1-staging\",\"clusterId\": \"159307887451:ellaosd2\"},\"deploymentPreferenceOverride\":{\"availabilityThreshold\": 0,\"maxConcurrentNodesPercent\": 100}}'"
+
+Sudo usermod -aG docker $USER
+/sdpds/components
+
+python sdpd-ops-mechanic -c sdpds-aws-curl -r iad -s gamma -a "--operation ApplyComponentVersions --payload '{\"componentVersionList\":[{\"componentVersion\":{\"componentName\":\"glp\",\"componentScopeDefinition\":{\"componentScope\": \"GLOBAL\"},\"majorVersion\": \"2\",\"minorVersion\": \"33\"}}],\"cluster\":{\"stackName\": \"swift-us-east-1-staging\",\"clusterId\": \"159307887451:ellaosd2\"},\"deploymentPreferenceOverride\":{\"availabilityThreshold\": 0,\"maxConcurrentNodesPercent\": 100}}'"
